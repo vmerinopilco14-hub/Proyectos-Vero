@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escaleras de números</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff8e7;--ink:#1f2a44;--card:#fff;--up:#1b9aaa;--down:#e4572e;--gold:#ffc93c;--ok:#2a9d5c;--bad:#d62839;--line:#e8dcc0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161d33;--ink:#fff3d6;--card:#222c4a;--line:#3a4670;--up:#4cc9d6;--down:#ff8a65}}
+:root[data-theme="dark"]{--bg:#161d33;--ink:#fff3d6;--card:#222c4a;--line:#3a4670;--up:#4cc9d6;--down:#ff8a65}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Fredoka',system-ui,sans-serif;font-size:18px;line-height:1.4}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:2rem;margin:0 0 4px;font-weight:700}
+p{margin:6px 0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:20px;margin-top:16px}
+label{display:block;font-weight:600;margin-top:12px}
+input{width:100%;font:inherit;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+input:focus,button:focus-visible,a.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button,a.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:12px 20px;background:var(--ink);color:var(--bg);cursor:pointer;text-decoration:none;display:inline-block;margin-top:14px}
+a.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+button.alt{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.top{display:flex;justify-content:space-between;font-weight:600}
+.bar{height:10px;background:var(--line);border-radius:6px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold);width:0;transition:width .3s}
+.seq{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;align-items:flex-end}
+.n{min-width:56px;padding:10px 6px;text-align:center;border-radius:12px;background:var(--bg);border:2px solid var(--line);font-weight:700;font-size:1.3rem}
+.n.q{border-color:var(--gold);background:var(--gold);color:#1f2a44}
+.n.q input{width:70px;padding:2px;text-align:center;font-weight:700;font-size:1.3rem;border:0;background:transparent;color:#1f2a44}
+.opt{flex:1;min-width:140px}
+.opt.sel.up{background:var(--up);color:#fff;border-color:var(--up)}
+.opt.sel.down{background:var(--down);color:#fff;border-color:var(--down)}
+.fb{font-weight:600;min-height:3em;margin-top:10px}
+.fb.ok{color:var(--ok)}.fb.bad{color:var(--bad)}
+.grade{font-size:4rem;font-weight:700;line-height:1}
+ul{padding-left:20px}
+small{opacity:.75}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Escaleras de números</h1>
+<p>Descubre la regla, completa el número que falta y di si la escalera sube o baja.</p>
+
+<section id="inicio" class="card">
+  <label for="nom">Tu nombre</label><input id="nom" autocomplete="name">
+  <label for="cur">Tu curso</label><input id="cur" placeholder="Ej: 1.º A">
+  <label for="wa">WhatsApp de tu docente</label><input id="wa" type="tel" inputmode="tel" placeholder="Ej: 0991234567">
+  <label for="doc">Correo de tu docente (opcional)</label><input id="doc" type="email" placeholder="docente@hotmail.com">
+  <p><small>Son 10 preguntas con sumas, restas y multiplicaciones. Tienes <b>3 intentos</b> y cuenta tu mejor nota.</small></p>
+  <button id="go">Empezar a jugar</button>
+  <p id="err" class="fb bad"></p>
+</section>
+
+<section id="juego" class="card" hidden>
+  <div class="top"><span id="prog"></span><span id="pts"></span></div>
+  <div class="bar"><i id="barra"></i></div>
+  <p id="regla" style="margin-top:14px"></p>
+  <div class="seq" id="seq"></div>
+  <p><b>¿La escalera sube o baja?</b></p>
+  <div class="row">
+    <button class="alt opt up" data-t="up">Creciente (sube)</button>
+    <button class="alt opt down" data-t="down">Decreciente (baja)</button>
+  </div>
+  <div class="fb" id="fb" aria-live="polite"></div>
+  <button id="ok">Comprobar</button>
+</section>
+
+<section id="fin" class="card" hidden>
+  <p id="hola"></p>
+  <div class="grade"><span id="nota"></span><small> / 10</small></div>
+  <p id="msg"></p>
+  <ul id="det"></ul>
+  <hr style="border:0;border-top:2px solid var(--line);margin:16px 0">
+  <p><b>Envía tu nota al docente</b></p>
+  <p><small>Se abrirá un mensaje ya escrito. Solo debes pulsar enviar.</small></p>
+  <div class="row">
+    <a class="btn" id="mWa" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+    <a class="btn alt" id="mOut" target="_blank" rel="noopener">Enviar con Hotmail / Outlook</a>
+    <a class="btn alt" id="mGm" target="_blank" rel="noopener">Enviar con Gmail</a>
+    <a class="btn alt" id="mail" target="_blank" rel="noopener">Otra app de correo</a>
+    <button class="alt" id="copy">Copiar resultado</button>
+  </div>
+  <p id="left" style="margin-top:16px;font-weight:600"></p>
+  <button id="again">Jugar otra vez</button>
+  <p id="cp" class="fb"></p>
+  <p><small>Elige el correo que usas. Se abrirá un mensaje ya escrito para tu docente: solo debes pulsar enviar. Si tu correo te pide iniciar sesión, hazlo y vuelve a pulsar el botón.</small></p>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const MAX=3;let mem={};
+const key=()=>'sucs_att:'+(info.nom+'|'+info.cur).toLowerCase().replace(/\s+/g,' ');
+function getA(){try{const v=localStorage.getItem(key());return v?JSON.parse(v):(mem[key()]||{n:0,best:0})}catch(e){return mem[key()]||{n:0,best:0}}}
+function setA(a){mem[key()]=a;try{localStorage.setItem(key(),JSON.stringify(a))}catch(e){}}
+let Q=[],i=0,pts=0,tipo=null,done=false,res=[],info={};
+
+// Cada pregunta: 5 términos, uno oculto
+function make(op){
+  let s=[],reg,t;
+  if(op==='+'){const a=R(1,30),d=R(2,12);for(let k=0;k<5;k++)s.push(a+d*k);reg='Suma '+d;t='up'}
+  if(op==='-'){const d=R(2,9),a=R(d*4+5,90);for(let k=0;k<5;k++)s.push(a-d*k);reg='Resta '+d;t='down'}
+  if(op==='x'){const a=R(1,5),r=R(2,3);for(let k=0;k<5;k++)s.push(a*Math.pow(r,k));reg='Multiplica por '+r;t='up'}
+  return{s,hide:R(1,4),reg,op,t};
+}
+function build(){
+  const ops=['+','+','+','-','-','-','x','x','x'];
+  ops.push(['+','-','x'][R(0,2)]);
+  return ops.map(make).sort(()=>Math.random()-.5);
+}
+function show(){
+  const q=Q[i];done=false;tipo=null;
+  $('prog').textContent='Intento '+(getA().n+1)+' de '+MAX+' · Pregunta '+(i+1)+' de 10';
+  $('pts').textContent='Puntos: '+pts;
+  $('barra').style.width=(i/10*100)+'%';
+  $('regla').innerHTML=q.op==='x'?'Pista: la regla es <b>multiplicar</b>.':q.op==='+'?'Pista: la regla es <b>sumar</b>.':'Pista: la regla es <b>restar</b>.';
+  $('seq').innerHTML=q.s.map((v,k)=>k===q.hide?'<div class="n q"><input id="resp" type="number" inputmode="numeric" aria-label="Número que falta" placeholder="?"></div>':'<div class="n">'+v+'</div>').join('');
+  document.querySelectorAll('.opt').forEach(b=>b.classList.remove('sel'));
+  $('fb').textContent='';$('fb').className='fb';
+  $('ok').textContent='Comprobar';
+  setTimeout(()=>$('resp').focus(),50);
+}
+document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+  if(done)return;tipo=b.dataset.t;
+  document.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b));
+});
+$('ok').onclick=()=>{
+  const q=Q[i];
+  if(done){i++;i<10?show():end();return}
+  const v=$('resp').value;
+  if(v===''||!tipo){$('fb').className='fb bad';$('fb').textContent='Escribe el número que falta y elige si sube o baja.';return}
+  const okN=Number(v)===q.s[q.hide],okT=tipo===q.t;
+  pts+=(okN?1:0)+(okT?1:0);done=true;
+  res.push({n:i+1,s:q.s.map((x,k)=>k===q.hide?'?':x).join(', '),okN,okT,ans:v,cor:q.s[q.hide]});
+  $('pts').textContent='Puntos: '+pts;
+  let m=okN&&okT?'¡Perfecto! ':'';
+  if(!okN)m+='El número correcto era '+q.s[q.hide]+'. ';
+  if(!okT)m+='Esta escalera es '+(q.t==='up'?'creciente (sube)':'decreciente (baja)')+'. ';
+  $('fb').className='fb '+(okN&&okT?'ok':'bad');$('fb').textContent=m;
+  $('ok').textContent=i<9?'Siguiente':'Ver mi nota';
+};
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('juego').hidden)$('ok').click()});
+
+function end(){
+  $('juego').hidden=true;$('fin').hidden=false;
+  const a=getA();a.n++;a.best=Math.max(a.best,pts);setA(a);
+  const nota=(pts/2).toFixed(1).replace('.0','');
+  const mejor=(a.best/2).toFixed(1).replace('.0','');
+  const quedan=MAX-a.n;
+  $('left').textContent=quedan>0?'Te quedan '+quedan+(quedan===1?' intento.':' intentos.')+' Tu mejor nota hasta ahora: '+mejor+' / 10':'Usaste tus '+MAX+' intentos. Tu mejor nota fue '+mejor+' / 10.';
+  $('again').hidden=quedan<=0;
+  $('hola').textContent='¡Buen trabajo, '+info.nom+'!';
+  $('nota').textContent=nota;
+  $('msg').textContent=pts>=18?'¡Eres un experto en sucesiones!':pts>=14?'¡Muy bien! Casi lo logras todo.':pts>=10?'Vas por buen camino. Repasa y vuelve a intentarlo.':'Sigue practicando, ¡tú puedes!';
+  $('det').innerHTML=res.map(r=>'<li>P'+r.n+': '+r.s+' → '+(r.okN?'número bien':'número mal ('+r.ans+', era '+r.cor+')')+', '+(r.okT?'tipo bien':'tipo mal')+'</li>').join('');
+  const fecha=new Date().toLocaleDateString('es-EC');
+  const cuerpo='Estimado/a docente:\n\nLe envío mi resultado del juego "Escaleras de números" (sucesiones crecientes y decrecientes).\n\nEstudiante: '+info.nom+'\nCurso: '+info.cur+'\nFecha: '+fecha+'\nIntento: '+a.n+' de '+MAX+'\nNota de este intento: '+nota+' / 10 ('+pts+' de 20 puntos)\nMejor nota hasta ahora: '+mejor+' / 10\n\nDetalle:\n'+res.map(r=>'P'+r.n+' ['+r.s+']: número '+(r.okN?'correcto':'incorrecto')+', tipo '+(r.okT?'correcto':'incorrecto')).join('\n')+'\n\nSaludos.';
+  const asunto='Nota de sucesiones - '+info.nom+' ('+info.cur+') - intento '+a.n+' - '+nota+'/10';
+  const wm='*Nota del juego Escaleras de números*\nEstudiante: '+info.nom+'\nCurso: '+info.cur+'\nFecha: '+fecha+'\nIntento: '+a.n+' de '+MAX+'\nNota de este intento: *'+nota+' / 10*\nMejor nota: '+mejor+' / 10';
+  $('mWa').href='https://wa.me/'+info.wa+'?text='+encodeURIComponent(wm);
+  $('mWa').hidden=!info.wa;
+  ['mOut','mGm','mail'].forEach(id=>$(id).hidden=!info.doc);
+  const q='&body='+encodeURIComponent(cuerpo);
+  $('mOut').href='https://outlook.live.com/mail/0/deeplink/compose?to='+encodeURIComponent(info.doc)+'&subject='+encodeURIComponent(asunto)+q;
+  $('mGm').href='https://mail.google.com/mail/?view=cm&to='+encodeURIComponent(info.doc)+'&su='+encodeURIComponent(asunto)+q;
+  $('mail').href='mailto:'+encodeURIComponent(info.doc)+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
+  $('copy').onclick=async()=>{
+    try{await navigator.clipboard.writeText('Para: '+info.doc+'\nAsunto: '+asunto+'\n\n'+cuerpo);$('cp').className='fb ok';$('cp').textContent='Copiado. Pégalo en tu correo.'}
+    catch(e){$('cp').className='fb bad';$('cp').textContent='No se pudo copiar. Usa el botón de enviar por correo.'}
+  };
+  try{localStorage.setItem('sucs_doc',info.doc);localStorage.setItem('sucs_wa',$('wa').value)}catch(e){}
+}
+$('go').onclick=()=>{
+  const nom=$('nom').value.trim(),cur=$('cur').value.trim(),doc=$('doc').value.trim();
+  let wa=$('wa').value.replace(/\D/g,'');
+  if(wa.startsWith('0'))wa='593'+wa.slice(1);else if(wa.length===9&&wa[0]==='9')wa='593'+wa;
+  if(!nom||!cur){$('err').textContent='Escribe tu nombre y tu curso.';return}
+  if(wa&&wa.length<11){$('err').textContent='El número de WhatsApp parece incompleto. Revisa que tenga 10 dígitos, por ejemplo 0991234567.';return}
+  if(doc&&!/^\S+@\S+\.\S+$/.test(doc)){$('err').textContent='El correo del docente no es válido.';return}
+  if(!wa&&!doc){$('err').textContent='Escribe el WhatsApp o el correo de tu docente para poder enviarle la nota.';return}
+  info={nom,cur,doc,wa};
+  if(getA().n>=MAX){$('err').textContent='Ya usaste tus '+MAX+' intentos. Tu mejor nota fue '+(getA().best/2)+' / 10.';return}
+  $('err').textContent='';Q=build();i=0;pts=0;res=[];
+  $('inicio').hidden=true;$('juego').hidden=false;show();
+};
+$('again').onclick=()=>{if(getA().n>=MAX)return;$('fin').hidden=true;Q=build();i=0;pts=0;res=[];$('juego').hidden=false;show()};
+try{const d=localStorage.getItem('sucs_doc');if(d)$('doc').value=d;const w=localStorage.getItem('sucs_wa');if(w)$('wa').value=w}catch(e){}
+</script>
+</body>
+</html>
